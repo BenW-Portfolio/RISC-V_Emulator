@@ -1,0 +1,21 @@
+0:	lui x9,0x1
+8:	lui x18,0x1a2b
+c:	addiw x18,x18,965
+10:	slli x18,x18,0xd
+18:	slli x18,x18,0xc
+1c:	addi x18,x18,-529
+20:	slli x18,x18,0xc
+24:	addi x18,x18,18
+28:	addi x10,x0,3
+2c:	addi x11,x0,8
+30:	addi x5,x0,0
+34:	addi x6,x0,0
+38:	add x19,x0,x9
+3c:	sd x20,0(x19)
+40:	addi x19,x19,64
+44:	addi x6,x6,1
+48:	blt x6,x11,3c
+4c:	addi x5,x5,1
+50:	blt x5,x10,34
+54:	addi x17,x0,2
+58:	ecall

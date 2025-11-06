@@ -1,0 +1,24 @@
+0x0 0x5c 0x0 0x2000
+lui x9,1
+addi x9,x9,0
+lui x18,6699
+addiw x18,x18,965
+slli x18,x18,13
+addi x18,x18,-1347
+slli x18,x18,12
+addi x18,x18,-529
+slli x18,x18,12
+addi x18,x18,18
+addi x10,x0,3
+addi x11,x0,8
+addi x5,x0,0
+addi x6,x0,0
+add x19,x0,x9
+sd x20,0(x19)
+addi x19,x19,64
+addi x6,x6,1
+blt x6,x11,-12
+addi x5,x5,1
+blt x5,x10,-28
+addi x17,x0,2
+ecall

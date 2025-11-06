@@ -1,0 +1,11 @@
+0x0 0x28 0x0 0x11000
+lui x9,1
+addi x9,x9,0
+addi x10,x0,1
+addi x11,x0,2
+addi x12,x0,3
+sh x10,0(x9)
+sh x11,512(x9)
+sh x12,1024(x9)
+addi x17,x0,2
+ecall

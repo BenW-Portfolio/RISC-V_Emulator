@@ -1,0 +1,53 @@
+    LOAD off    0x0000000000000000 vaddr 0x0000000000001000 paddr 0x0000000000001000 align 2**12
+         filesz 0x0000000000000000 memsz 0x0000000000010000 flags rw-
+
+Sections:
+Idx Name          Size      VMA               LMA               File off  Algn
+  0 .text         00000028  0000000000000000  0000000000000000  00001000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .bss          00010000  0000000000001000  0000000000001000  00002000  2**6
+                  ALLOC
+  2 .debug_aranges 00000030  0000000000000000  0000000000000000  00001030  2**4
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+  3 .debug_info   0000002e  0000000000000000  0000000000000000  00001060  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+  4 .debug_abbrev 00000014  0000000000000000  0000000000000000  0000108e  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+  5 .debug_line   0000008a  0000000000000000  0000000000000000  000010a2  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+  6 .debug_str    0000006e  0000000000000000  0000000000000000  0000112c  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+
+Disassembly of section .text:
+
+0000000000000000 <_start>:
+    /* If we alternate memory accesses at a0 and a1, where a1 is a multiple 
+     * of a0 such that it maps to the same cache line, then we should always
+     * get a miss for every access since we must evict the previous value.
+     * Here we assume that there's only at most 8 cache lines. 
+     */
+    lui s1, %hi(memory)
+   0:	000014b7          	lui	s1,0x1
+    addi s1, s1, %lo(memory)
+   4:	00048493          	addi	s1,s1,0 # 1000 <__DATA_BEGIN__>
+
+    /* We will store these values into memory */
+    li a0, 0x1
+   8:	00100513          	addi	a0,zero,1
+    li a1, 0x2
+   c:	00200593          	addi	a1,zero,2
+    li a2, 0x3
+  10:	00300613          	addi	a2,zero,3
+
+    /* Store values in addresses that are offsetted by a multiple of 64*8 (cache line size * cache line) */
+    sh a0, 0(s1)
+  14:	00a49023          	sh	a0,0(s1)
+    sh a1, 512(s1)
+  18:	20b49023          	sh	a1,512(s1)
+    sh a2, 1024(s1)
+  1c:	40c49023          	sh	a2,1024(s1)
+
+    /* Exit */
+    li a7, 0x2
+  20:	00200893          	addi	a7,zero,2
+  24:	00000073          	ecall

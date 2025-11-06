@@ -1,0 +1,95 @@
+    LOAD off    0x0000000000000000 vaddr 0x0000000000001000 paddr 0x0000000000001000 align 2**12
+         filesz 0x0000000000000000 memsz 0x0000000000001000 flags rw-
+
+Sections:
+Idx Name          Size      VMA               LMA               File off  Algn
+  0 .text         00000050  0000000000000000  0000000000000000  00001000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .bss          00001000  0000000000001000  0000000000001000  00002000  2**0
+                  ALLOC
+  2 .debug_aranges 00000030  0000000000000000  0000000000000000  00001050  2**4
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+  3 .debug_info   0000002e  0000000000000000  0000000000000000  00001080  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+  4 .debug_abbrev 00000014  0000000000000000  0000000000000000  000010ae  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+  5 .debug_line   000000c9  0000000000000000  0000000000000000  000010c2  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+  6 .debug_str    00000071  0000000000000000  0000000000000000  0000118b  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+
+Disassembly of section .text:
+
+0000000000000000 <_start>:
+     * We thus should get additional hits since additional accesses all go to the same cache line.
+     * The only misses that should occur is when we first access a new cache line.
+     */
+
+
+    lui s1, %hi(memory)
+   0:	000014b7          	lui	s1,0x1
+    addi s1, s1, %lo(memory)
+   4:	00048493          	addi	s1,s1,0 # 1000 <__DATA_BEGIN__>
+    li s2, 0x24
+   8:	02400913          	addi	s2,zero,36
+    /* a1 = NLINES */
+    /* a3 = 64 = cache line size */
+    /* t0 = k (Outermost loop) */
+    /* t1 = i (Middle loop) */
+    /* t2 = j (Innermost loop) */
+    addi a0, x0, 3
+   c:	00300513          	addi	a0,zero,3
+    addi a1, x0, 8
+  10:	00800593          	addi	a1,zero,8
+    addi a2, x0, 64
+  14:	04000613          	addi	a2,zero,64
+
+    addi t0, x0, 0
+  18:	00000293          	addi	t0,zero,0
+
+000000000000001c <outerLoop>:
+outerLoop:
+    /* Reset i and memory address */
+    addi t1, x0, 0
+  1c:	00000313          	addi	t1,zero,0
+    add s3, x0, s1
+  20:	009009b3          	add	s3,zero,s1
+
+0000000000000024 <innerLoop>:
+innerLoop:
+    /* Reset j */
+    addi t2, x0, 0
+  24:	00000393          	addi	t2,zero,0
+
+0000000000000028 <innermostLoop>:
+innermostLoop:
+    /* Access memory, then we increment s2 (memory address) by 1 byte. */
+    sb s4, 0(s3)
+  28:	01498023          	sb	s4,0(s3)
+    addi s3, s3, 1
+  2c:	00198993          	addi	s3,s3,1
+    
+    /* Wrote to one byte of this cacheline, increment j to continue writing to this cacheline */
+    addi t2, t2, 1
+  30:	00138393          	addi	t2,t2,1
+    blt t2, a2, innermostLoop
+  34:	fec3cae3          	blt	t2,a2,28 <innermostLoop>
+
+    /* Finished writing to this cacheline, increment i to write to the next cacheline */
+    addi t1, t1, 1
+  38:	00130313          	addi	t1,t1,1
+    blt t1, a1, innerLoop
+  3c:	feb344e3          	blt	t1,a1,24 <innerLoop>
+
+    /* We wrote to NLINES different cachelines, increment i and reset so we write to same location again.
+     * On iterations after the first one, if we have enough cache lines, we should get hits.
+     */
+    addi t0, t0, 1
+  40:	00128293          	addi	t0,t0,1
+    blt t0, a0, outerLoop
+  44:	fca2cce3          	blt	t0,a0,1c <outerLoop>
+
+    /* Exit */
+    li a7, 0x2
+  48:	00200893          	addi	a7,zero,2
+  4c:	00000073          	ecall

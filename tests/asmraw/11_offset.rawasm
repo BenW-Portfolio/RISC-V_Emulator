@@ -1,0 +1,55 @@
+    LOAD off    0x0000000000000000 vaddr 0x0000000000001000 paddr 0x0000000000001000 align 2**12
+         filesz 0x0000000000000000 memsz 0x0000000000001000 flags rw-
+
+Sections:
+Idx Name          Size      VMA               LMA               File off  Algn
+  0 .text         00000028  0000000000000000  0000000000000000  00001000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .bss          00001000  0000000000001000  0000000000001000  00002000  2**0
+                  ALLOC
+  2 .debug_aranges 00000030  0000000000000000  0000000000000000  00001030  2**4
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+  3 .debug_info   0000002e  0000000000000000  0000000000000000  00001060  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+  4 .debug_abbrev 00000014  0000000000000000  0000000000000000  0000108e  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+  5 .debug_line   00000082  0000000000000000  0000000000000000  000010a2  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+  6 .debug_str    0000006c  0000000000000000  0000000000000000  00001124  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+
+Disassembly of section .text:
+
+0000000000000000 <_start>:
+	/* Write to different cache lines with different offset from each other 
+	 * to ensure 100% miss rate. We assume that we have at least 4 cache lines.
+	 */
+	
+
+	la s1, global_variable
+   0:	00001497          	auipc	s1,0x1
+   4:	00048493          	addi	s1,s1,0 # 1000 <__DATA_BEGIN__>
+	
+	/* First cache-line */
+	li a0, 8
+   8:	00800513          	addi	a0,zero,8
+	ld a0, 0(s1) 
+   c:	0004b503          	ld	a0,0(s1)
+
+	/* Second cache-line, exactly 64 bytes away. 100% miss rate here. */
+	li a1, 42	
+  10:	02a00593          	addi	a1,zero,42
+	sd a1, 64(s1) 
+  14:	04b4b023          	sd	a1,64(s1)
+
+	/* Third cache-line, exactly 128 bytes away. 100% miss rate here. */
+	li a2, 68	
+  18:	04400613          	addi	a2,zero,68
+	sd a2, 128(s1) 
+  1c:	08c4b023          	sd	a2,128(s1)
+
+	/* Exit */
+	li a7, 0x2
+  20:	00200893          	addi	a7,zero,2
+	ecall
+  24:	00000073          	ecall

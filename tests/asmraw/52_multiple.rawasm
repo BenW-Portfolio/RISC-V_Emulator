@@ -1,0 +1,88 @@
+    LOAD off    0x0000000000000000 vaddr 0x0000000000001000 paddr 0x0000000000001000 align 2**12
+         filesz 0x0000000000000000 memsz 0x0000000000001000 flags rw-
+
+Sections:
+Idx Name          Size      VMA               LMA               File off  Algn
+  0 .text         0000005c  0000000000000000  0000000000000000  00001000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .bss          00001000  0000000000001000  0000000000001000  00002000  2**0
+                  ALLOC
+  2 .debug_aranges 00000030  0000000000000000  0000000000000000  00001060  2**4
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+  3 .debug_info   0000002e  0000000000000000  0000000000000000  00001090  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+  4 .debug_abbrev 00000014  0000000000000000  0000000000000000  000010be  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+  5 .debug_line   000000ae  0000000000000000  0000000000000000  000010d2  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+  6 .debug_str    0000006e  0000000000000000  0000000000000000  00001180  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+
+Disassembly of section .text:
+
+0000000000000000 <_start>:
+     * If we have less than NLINES, we should get a lower hit rate due to eviction. 
+     * Run this test with different values of NLINES to see the effect.
+     */
+    
+
+    lui s1, %hi(memory)
+   0:	000014b7          	lui	s1,0x1
+    addi s1, s1, %lo(memory)
+   4:	00048493          	addi	s1,s1,0 # 1000 <__DATA_BEGIN__>
+    li s2, 0x3456789abcdef012
+   8:	01a2b937          	lui	s2,0x1a2b
+   c:	3c59091b          	addiw	s2,s2,965
+  10:	00d91913          	slli	s2,s2,0xd
+  14:	abd90913          	addi	s2,s2,-1347 # 1a2aabd <__BSS_END__+0x1a28abd>
+  18:	00c91913          	slli	s2,s2,0xc
+  1c:	def90913          	addi	s2,s2,-529
+  20:	00c91913          	slli	s2,s2,0xc
+  24:	01290913          	addi	s2,s2,18
+
+    /* a0 = NACCESSES */
+    /* a1 = NLINES */
+    /* t0 = k (Outer loop)*/
+    /* t1 = i (Inner loop) */
+    addi a0, x0, 3
+  28:	00300513          	addi	a0,zero,3
+    addi a1, x0, 8
+  2c:	00800593          	addi	a1,zero,8
+
+    addi t0, x0, 0
+  30:	00000293          	addi	t0,zero,0
+
+0000000000000034 <outerLoop>:
+outerLoop:
+    /* Reset i and memory address */
+    addi t1, x0, 0
+  34:	00000313          	addi	t1,zero,0
+    add s3, x0, s1
+  38:	009009b3          	add	s3,zero,s1
+
+000000000000003c <innerLoop>:
+innerLoop:
+    /* Access memory, then we increment s2 (memory address) by 64 bytes because that's the size of cache line in x86 */
+    sd s4, 0(s3)
+  3c:	0149b023          	sd	s4,0(s3)
+    addi s3, s3, 64
+  40:	04098993          	addi	s3,s3,64
+    
+    /* Wrote to this cacheline, increment i to write to the next cacheline */
+    addi t1, t1, 1
+  44:	00130313          	addi	t1,t1,1
+    blt t1, a1, innerLoop
+  48:	feb34ae3          	blt	t1,a1,3c <innerLoop>
+
+    /* We wrote to NLINES different cachelines, increment i and reset so we write to same location again.
+     * On iterations after the first one, if we have enough cache lines, we should get hits.
+     */
+    addi t0, t0, 1
+  4c:	00128293          	addi	t0,t0,1
+    blt t0, a0, outerLoop
+  50:	fea2c2e3          	blt	t0,a0,34 <outerLoop>
+
+    /* Exit */
+    li a7, 0x2
+  54:	00200893          	addi	a7,zero,2
+  58:	00000073          	ecall
